@@ -6,210 +6,103 @@
   <title>AI Smart Air Traffic Control</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css">
+  <style>
+    :root { --bg:#080d0a; --panel:#101712; --panel-2:#0c120e; --line:#26372d; --text:#dce9e0; --muted:#80968a; --green:#6fefa0; --green-dark:#315f47; --amber:#f0a83c; --red:#ff6b5e; --blue:#7bb7ff; --mono:"JetBrains Mono",monospace; --head:"Space Grotesk",sans-serif; }
+    * { box-sizing:border-box; }
+    html { scroll-behavior:smooth; }
+    body { margin:0; min-height:100vh; background:radial-gradient(circle at 15% 0%,rgba(111,239,160,.07),transparent 35%),repeating-linear-gradient(0deg,rgba(255,255,255,.012) 0,rgba(255,255,255,.012) 1px,transparent 1px,transparent 3px),var(--bg); color:var(--text); font-family:var(--mono); }
+    button,input { font:inherit; }
+    .topbar { min-height:76px; padding:16px 28px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--line); background:rgba(10,16,12,.94); }
+    .brand,.top-status,.status-box,.brand { display:flex; align-items:center; }
+    .brand { gap:14px; }
+    .brand-mark { width:44px; height:44px; display:grid; place-items:center; border:1px solid var(--green-dark); color:var(--green); font-weight:700; letter-spacing:1px; }
+    .brand h1 { margin:0; font-family:var(--head); font-size:18px; letter-spacing:.04em; }
+    .brand p { margin:4px 0 0; color:var(--muted); font-size:11px; }
+    .top-status { gap:18px; }
+    .status-box { gap:8px; padding:7px 10px; border:1px solid var(--line); background:var(--panel-2); font-size:11px; color:var(--muted); }
+    .status-dot { width:7px; height:7px; border-radius:50%; background:var(--green); box-shadow:0 0 8px rgba(111,239,160,.7); }
+    .status-dot.error { background:var(--red); box-shadow:0 0 8px rgba(255,107,94,.7); }
+    .clock { min-width:78px; text-align:right; color:var(--green); font-size:14px; }
+    .dashboard { width:min(1400px,calc(100% - 40px)); margin:22px auto 40px; display:grid; grid-template-columns:minmax(380px,1fr) minmax(430px,1.05fr); gap:18px; }
+    .panel { padding:18px; background:rgba(16,23,18,.96); border:1px solid var(--line); border-radius:4px; }
+    .panel-title { display:flex; align-items:center; justify-content:space-between; gap:15px; margin-bottom:16px; padding-bottom:11px; border-bottom:1px solid var(--line); }
+    .panel-title h2 { margin:0; font-family:var(--head); font-size:15px; }
+    .panel-title p { margin:4px 0 0; color:var(--muted); font-size:10px; }
+    .small-status { color:var(--muted); font-size:10px; white-space:nowrap; }
+    .radar-holder { display:flex; justify-content:center; }
+    #radarCanvas { width:min(100%,520px); height:auto; aspect-ratio:1; border-radius:50%; background:#050a07; border:1px solid var(--line); }
+    .legend { margin-top:13px; display:flex; justify-content:center; gap:20px; color:var(--muted); font-size:10px; }
+    .legend span { display:flex; align-items:center; gap:6px; }
+    .legend-dot { width:8px; height:8px; display:inline-block; border-radius:50%; }
+    .legend-dot.traffic { background:var(--green); } .legend-dot.subject { background:var(--amber); } .legend-dot.ash { background:var(--red); }
+    .intake-form { display:flex; flex-direction:column; gap:13px; }
+    .field { display:flex; flex-direction:column; gap:6px; }
+    .field>span { color:var(--muted); font-size:10px; } .field em { color:var(--green); font-style:normal; }
+    .field input,.command-row input { width:100%; padding:10px 11px; color:var(--text); background:#0a100c; border:1px solid var(--line); outline:none; border-radius:3px; }
+    .field input:focus,.command-row input:focus { border-color:var(--green-dark); box-shadow:0 0 0 2px rgba(111,239,160,.05); }
+    .field input::placeholder,.command-row input::placeholder { color:#53655b; }
+    .field-row { display:grid; grid-template-columns:1fr 1fr; gap:13px; }
+    .button-row,.voice-controls,.command-row,.ai-actions { display:flex; gap:9px; align-items:center; }
+    .btn { border:1px solid var(--line); border-radius:3px; padding:10px 13px; cursor:pointer; transition:.15s ease; color:var(--text); background:#111a14; }
+    .btn:hover { border-color:var(--green-dark); } .btn:disabled { opacity:.5; cursor:not-allowed; }
+    .btn.primary { flex:1; color:#061009; background:var(--green); border-color:var(--green); font-weight:700; } .btn.primary:hover { background:#8af3b2; }
+    .btn.secondary { background:#111912; } .btn.voice { color:var(--amber); border-color:#5f4928; } .btn.small { padding:7px 9px; font-size:10px; }
+    .voice-controls { color:var(--muted); font-size:9px; } .message { min-height:15px; margin:0; color:var(--amber); font-size:10px; }
+    .command-box { margin-top:18px; padding-top:16px; border-top:1px solid var(--line); } .command-box>label { display:block; margin-bottom:7px; color:var(--muted); font-size:10px; }
+    .command-row input { flex:1; } .command-help { margin:8px 0 0; color:#61736a; font-size:9px; line-height:1.5; }
+    .report-panel,.log-panel,.alerts-panel { grid-column:1/-1; }
+    .report-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; } .report-item { padding:11px; border:1px solid var(--line); background:var(--panel-2); }
+    .report-item .label { display:block; margin-bottom:7px; color:var(--muted); font-size:9px; } .report-item .value { font-size:12px; line-height:1.4; }
+    .tag { display:inline-block; padding:3px 6px; border-radius:2px; font-size:9px; border:1px solid currentColor; } .tag.safe { color:var(--green); } .tag.warn { color:var(--amber); } .tag.danger { color:var(--red); }
+    .ai-section { margin-top:16px; border-top:1px solid var(--line); padding-top:16px; } .ai-heading { display:flex; justify-content:space-between; align-items:center; gap:10px; }
+    .ai-heading h3 { margin:0; font-family:var(--head); font-size:13px; } .ai-heading span { color:var(--muted); font-size:9px; }
+    .ai-output { margin-top:10px; min-height:90px; padding:13px; line-height:1.65; font-size:11px; color:#cfe1d5; background:#080d0a; border-left:2px solid var(--green); }
+    .ai-actions { margin-top:10px; } .log-actions { display:flex; align-items:center; gap:8px; } .table-wrap { overflow-x:auto; }
+    table { width:100%; border-collapse:collapse; min-width:800px; } th,td { padding:9px 8px; text-align:left; border-bottom:1px solid var(--line); font-size:9px; white-space:nowrap; } th { color:var(--muted); font-weight:500; } td { color:#cbd9d0; }
+    .empty { text-align:center; padding:22px; color:var(--muted); } .alerts { max-height:250px; overflow-y:auto; }
+    .alert { display:grid; grid-template-columns:70px 70px 1fr; gap:8px; padding:8px 10px; border-bottom:1px solid #1b281f; font-size:10px; } .alert-time { color:var(--muted); } .alert-level { font-weight:700; }
+    .alert.info .alert-level { color:var(--blue); } .alert.ok .alert-level { color:var(--green); } .alert.warn .alert-level { color:var(--amber); } .alert.danger .alert-level { color:var(--red); }
+    footer { padding:0 20px 30px; text-align:center; color:#53655b; font-size:9px; }
+    @media (max-width:950px) { .dashboard { grid-template-columns:1fr; } .report-grid { grid-template-columns:repeat(2,1fr); } .topbar { align-items:flex-start; gap:15px; } .top-status { flex-direction:column; align-items:flex-end; gap:7px; } }
+    @media (max-width:600px) { .dashboard { width:min(100% - 20px,1400px); margin-top:10px; } .topbar { padding:13px; } .brand h1 { font-size:14px; } .field-row,.report-grid { grid-template-columns:1fr; } .button-row,.voice-controls,.command-row,.ai-actions { flex-direction:column; align-items:stretch; } }
+  </style>
 </head>
 <body>
-
-<header class="topbar">
-  <div class="brand">
-    <div class="brand-mark">ATC</div>
-    <div>
-      <h1>AI SMART AIR TRAFFIC CONTROL</h1>
-      <p>Web-based traffic monitoring and runway advisory</p>
-    </div>
-  </div>
-
-  <div class="top-status">
-    <div class="status-box">
-      <span class="status-dot" id="systemDot"></span>
-      <span id="systemStatus">System Online</span>
-    </div>
-    <div class="clock" id="clock">--:--:--</div>
-  </div>
-</header>
-
+<header class="topbar"><div class="brand"><div class="brand-mark">ATC</div><div><h1>AI SMART AIR TRAFFIC CONTROL</h1><p>Web-based traffic monitoring and runway advisory</p></div></div><div class="top-status"><div class="status-box"><span class="status-dot" id="systemDot"></span><span id="systemStatus">System Online</span></div><div class="clock" id="clock">--:--:--</div></div></header>
 <main class="dashboard">
+<section class="panel radar-panel"><div class="panel-title"><div><h2>Radar Scope</h2><p>Simulated traffic and hazard zones</p></div><span class="small-status" id="radarStatus">4 contacts</span></div><div class="radar-holder"><canvas id="radarCanvas" width="520" height="520"></canvas></div><div class="legend"><span><i class="legend-dot traffic"></i>Traffic</span><span><i class="legend-dot subject"></i>Subject</span><span><i class="legend-dot ash"></i>Ash zone</span></div></section>
+<section class="panel intake-panel"><div class="panel-title"><div><h2>Aircraft Intake</h2><p>Enter data manually or use voice input</p></div><span class="small-status" id="voiceStatus">Voice ready</span></div>
+<form id="intakeForm"><label class="field"><span>Aircraft type</span><input type="text" name="aircraft_name" placeholder="Boeing 737" required></label><label class="field"><span>Flight number</span><input type="text" name="flight_number" placeholder="AI203" required></label><label class="field"><span>Destination</span><input type="text" name="destination" placeholder="Mumbai" required></label><div class="field-row"><label class="field"><span>Fuel level <em>%</em></span><input type="number" name="fuel_level" min="0" max="100" step="0.1" placeholder="65" required></label><label class="field"><span>Engine temperature <em>°C</em></span><input type="number" name="engine_temp" step="0.1" placeholder="78" required></label></div><div class="field-row"><label class="field"><span>Wind speed <em>km/h</em></span><input type="number" name="wind_speed" min="0" step="0.1" placeholder="25" required></label><label class="field"><span>Visibility <em>m</em></span><input type="number" name="visibility" min="0" step="1" placeholder="3000" required></label></div><div class="button-row"><button class="btn primary" type="submit" id="analyseBtn">Run ATC Analysis</button><button class="btn secondary" type="button" id="randomBtn">Random Aircraft</button></div><div class="voice-controls"><button class="btn voice" type="button" id="voiceBtn">Start Voice Input</button><span>Shortcut: Alt + V</span></div><p class="message" id="formMessage"></p></form>
+<div class="command-box"><label for="commandInput">Text command</label><div class="command-row"><input id="commandInput" type="text" placeholder="Example: collision detection"><button class="btn secondary" id="commandBtn" type="button">Run Command</button></div><p class="command-help">Try: collision detection, runway allocation, weather analysis, emergency check, volcanic ash, or system status.</p></div></section>
+<section class="panel report-panel" id="reportPanel" hidden><div class="panel-title"><div><h2>ATC Analysis Report</h2><p id="reportTime"></p></div><span class="small-status">Latest result</span></div><div class="report-grid" id="reportGrid"></div><div class="ai-section"><div class="ai-heading"><h3>AI ATC Assessment</h3><span id="aiStatus">Local rule-based assessment</span></div><div class="ai-output" id="aiOutput">Run an analysis to generate the assessment.</div><div class="ai-actions"><button class="btn secondary" id="ollamaBtn" type="button">Check Ollama</button><button class="btn secondary" id="speakBtn" type="button">Read Result Aloud</button></div></div></section>
+<section class="panel log-panel"><div class="panel-title"><div><h2>Flight History</h2><p>Stored in the browser using localStorage</p></div><div class="log-actions"><span class="small-status" id="historyCount">0 records</span><button class="btn secondary small" id="clearHistoryBtn" type="button">Clear History</button></div></div><div class="table-wrap"><table><thead><tr><th>Flight</th><th>Aircraft</th><th>Destination</th><th>Weather</th><th>Collision</th><th>Emergency</th><th>Runway</th><th>Time</th></tr></thead><tbody id="historyBody"><tr><td colspan="8" class="empty">No flights processed yet.</td></tr></tbody></table></div></section>
+<section class="panel alerts-panel"><div class="panel-title"><div><h2>Live Alert Log</h2><p>Recent system messages</p></div><button class="btn secondary small" id="clearAlertsBtn" type="button">Clear Alerts</button></div><div class="alerts" id="alerts"><div class="alert info"><span class="alert-time">--:--:--</span><span>System started. Waiting for aircraft data.</span></div></div></section>
+</main><footer>Educational simulation only. This project is not a certified aviation control system.</footer>
+<script>
+const WORLD={width:450,height:500},RADAR_AIRCRAFT={AI101:[120,340],IND450:[200,180],QTR778:[310,410],USA220:[80,270]},ASH_ZONES=[{x:300,y:300,radius:80},{x:150,y:450,radius:60}],COLLISION_THRESHOLD=50,OLLAMA_URL="http://localhost:11434/api/generate",OLLAMA_MODEL="llama3.2:3b",HISTORY_KEY="atcFlightHistory";
+let radarContacts={},subjectAircraft=null,sweepAngle=0,latestReport=null,recognition=null,listening=false;
+const canvas=document.getElementById("radarCanvas"),ctx=canvas.getContext("2d"),form=document.getElementById("intakeForm"),analyseBtn=document.getElementById("analyseBtn"),formMessage=document.getElementById("formMessage");
+function nowTime(){return new Date().toLocaleTimeString("en-GB",{hour12:false})} function tickClock(){document.getElementById("clock").textContent=nowTime()} setInterval(tickClock,1000);tickClock();
+function randomPosition(){return{x:Number((Math.random()*350+50).toFixed(2)),y:Number((Math.random()*400+50).toFixed(2))}}
+function updateRadarContacts(){const result={};for(const[code,position]of Object.entries(RADAR_AIRCRAFT))result[code]=[Number((position[0]+Math.random()*10-5).toFixed(1)),Number((position[1]+Math.random()*10-5).toFixed(1))];radarContacts=result;document.getElementById("radarStatus").textContent=`${Object.keys(radarContacts).length} contacts`}
+function toCanvas(x,y){return[x/WORLD.width*canvas.width,y/WORLD.height*canvas.height]}
+function drawRadar(){const w=canvas.width,h=canvas.height,cx=w/2,cy=h/2,maxR=Math.min(w,h)/2-5;ctx.clearRect(0,0,w,h);ctx.fillStyle="#050a07";ctx.fillRect(0,0,w,h);ctx.strokeStyle="rgba(111,239,160,.15)";ctx.lineWidth=1;for(let i=1;i<=4;i++){ctx.beginPath();ctx.arc(cx,cy,maxR/4*i,0,Math.PI*2);ctx.stroke()}ctx.beginPath();ctx.moveTo(cx,5);ctx.lineTo(cx,h-5);ctx.moveTo(5,cy);ctx.lineTo(w-5,cy);ctx.stroke();for(const zone of ASH_ZONES){const[x,y]=toCanvas(zone.x,zone.y),radius=zone.radius/WORLD.width*w;ctx.beginPath();ctx.fillStyle="rgba(255,107,94,.10)";ctx.strokeStyle="rgba(255,107,94,.45)";ctx.arc(x,y,radius,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.fillStyle="rgba(255,107,94,.75)";ctx.font="9px JetBrains Mono, monospace";ctx.fillText("ASH",x-10,y)}ctx.save();ctx.translate(cx,cy);ctx.rotate(sweepAngle);const sweep=ctx.createLinearGradient(0,0,maxR,0);sweep.addColorStop(0,"rgba(111,239,160,.35)");sweep.addColorStop(1,"rgba(111,239,160,0)");ctx.beginPath();ctx.moveTo(0,0);ctx.arc(0,0,maxR,-.18,.18);ctx.closePath();ctx.fillStyle=sweep;ctx.fill();ctx.restore();for(const[code,position]of Object.entries(radarContacts)){const[x,y]=toCanvas(position[0],position[1]);ctx.beginPath();ctx.fillStyle="#6fefa0";ctx.shadowColor="rgba(111,239,160,.8)";ctx.shadowBlur=7;ctx.arc(x,y,4,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;ctx.fillStyle="#9fd6b8";ctx.font="10px JetBrains Mono, monospace";ctx.fillText(code,x+7,y-6)}if(subjectAircraft){const[x,y]=toCanvas(subjectAircraft.x,subjectAircraft.y);ctx.beginPath();ctx.fillStyle="#f0a83c";ctx.shadowColor="rgba(240,168,60,.9)";ctx.shadowBlur=10;ctx.arc(x,y,5.5,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;ctx.fillStyle="#f5c98a";ctx.font="bold 11px JetBrains Mono, monospace";ctx.fillText(subjectAircraft.label,x+8,y-8)}}
+function animateRadar(){sweepAngle+=.012;drawRadar();requestAnimationFrame(animateRadar)} function calculateDistance(x1,y1,x2,y2){return Math.sqrt((x2-x1)**2+(y2-y1)**2)}
+function checkCollision(x,y){let nearest=null,nearestDistance=Infinity;for(const[name,position]of Object.entries(radarContacts)){const distance=calculateDistance(x,y,position[0],position[1]);if(distance<nearestDistance){nearestDistance=distance;nearest=name}}return{nearestAircraft:nearest,distance:Number(nearestDistance.toFixed(1)),risk:nearestDistance<COLLISION_THRESHOLD}}
+function checkVolcanicAsh(x,y){return ASH_ZONES.some(zone=>calculateDistance(x,y,zone.x,zone.y)<zone.radius)} function analyseWeather(wind,visibility){const dangerous=wind>50||visibility<500;return{status:dangerous?"Dangerous":"Safe",dangerous}} function detectEmergencies(fuel,engineTemp,ash){const emergencies=[];if(fuel<20)emergencies.push("LOW FUEL");if(engineTemp>90)emergencies.push("ENGINE OVERHEAT");if(ash)emergencies.push("VOLCANIC ASH");return emergencies} function allocateRunway(emergencies,wind){if(emergencies.length)return{number:1,reason:"Emergency - Priority Landing"};if(wind>50)return{number:3,reason:"Strong Wind - Safer Runway"};return{number:2,reason:"Regular Operation"}}
+function createReport(data){const position=randomPosition(),weather=analyseWeather(data.wind,data.visibility),collision=checkCollision(position.x,position.y),ash=checkVolcanicAsh(position.x,position.y),emergencies=detectEmergencies(data.fuel,data.engineTemp,ash),runway=allocateRunway(emergencies,data.wind);return{aircraft_name:data.aircraft,flight_number:data.flight,destination:data.destination,fuel_level:data.fuel,engine_temp:data.engineTemp,wind_speed:data.wind,visibility:data.visibility,pos_x:position.x,pos_y:position.y,weather_status:weather.status,collision_status:collision.risk?"RISK":"Safe",nearest_aircraft:collision.nearestAircraft,nearest_distance:collision.distance,volcanic_ash:ash,emergencies,emergency_status:emergencies.length?emergencies.join(", "):"None",runway_number:runway.number,runway_reason:runway.reason,created_at:new Date().toISOString()}}
+function escapeHTML(value){return String(value??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;")} function tag(text,type){return`<span class="tag ${type}">${escapeHTML(text)}</span>`}
+function renderReport(r){const panel=document.getElementById("reportPanel"),grid=document.getElementById("reportGrid"),weather=tag(r.weather_status==="Dangerous"?"DANGEROUS":"SAFE",r.weather_status==="Dangerous"?"danger":"safe"),collision=tag(r.collision_status==="RISK"?"RISK":"SAFE SEPARATION",r.collision_status==="RISK"?"danger":"safe"),ash=tag(r.volcanic_ash?"DETECTED":"CLEAR",r.volcanic_ash?"danger":"safe"),emergency=r.emergencies.length?tag(r.emergency_status,"warn"):tag("NONE","safe");grid.innerHTML=`<div class="report-item"><span class="label">Aircraft</span><span class="value">${escapeHTML(r.aircraft_name)}</span></div><div class="report-item"><span class="label">Flight</span><span class="value">${escapeHTML(r.flight_number)}</span></div><div class="report-item"><span class="label">Destination</span><span class="value">${escapeHTML(r.destination)}</span></div><div class="report-item"><span class="label">Position</span><span class="value">(${r.pos_x}, ${r.pos_y})</span></div><div class="report-item"><span class="label">Fuel</span><span class="value">${r.fuel_level}%</span></div><div class="report-item"><span class="label">Engine temperature</span><span class="value">${r.engine_temp} °C</span></div><div class="report-item"><span class="label">Wind speed</span><span class="value">${r.wind_speed} km/h</span></div><div class="report-item"><span class="label">Visibility</span><span class="value">${r.visibility} m</span></div><div class="report-item"><span class="label">Weather</span><span class="value">${weather}</span></div><div class="report-item"><span class="label">Nearest traffic</span><span class="value">${escapeHTML(r.nearest_aircraft)} / ${r.nearest_distance} units</span></div><div class="report-item"><span class="label">Collision check</span><span class="value">${collision}</span></div><div class="report-item"><span class="label">Volcanic ash</span><span class="value">${ash}</span></div><div class="report-item"><span class="label">Emergency status</span><span class="value">${emergency}</span></div><div class="report-item"><span class="label">Runway</span><span class="value">Runway ${r.runway_number}</span></div><div class="report-item"><span class="label">Runway reason</span><span class="value">${escapeHTML(r.runway_reason)}</span></div><div class="report-item"><span class="label">Processing mode</span><span class="value">Browser JavaScript</span></div>`;document.getElementById("reportTime").textContent=`Processed at ${new Date(r.created_at).toLocaleString()}`;panel.hidden=false;panel.scrollIntoView({behavior:"smooth",block:"nearest"})}
+function buildLocalAssessment(r){const lines=[];lines.push(r.emergencies.length?`Emergency conditions detected: ${r.emergency_status}.`:"No immediate emergency condition was detected.");lines.push(r.collision_status==="RISK"?`Collision risk is present near ${r.nearest_aircraft}. The aircraft should maintain separation.`:`The nearest simulated traffic is ${r.nearest_aircraft}, at ${r.nearest_distance} units.`);lines.push(r.weather_status==="Dangerous"?"Weather conditions are outside the project's normal operating thresholds.":"Wind speed and visibility are within the project's normal thresholds.");if(r.volcanic_ash)lines.push("The aircraft position is inside a simulated volcanic ash zone.");lines.push(`Runway ${r.runway_number} is assigned using the project's simplified runway allocation rules.`);return lines.join(" ")}
+function getHistory(){try{return JSON.parse(localStorage.getItem(HISTORY_KEY))||[]}catch{return[]}} function saveHistory(r){const h=getHistory();h.unshift(r);localStorage.setItem(HISTORY_KEY,JSON.stringify(h.slice(0,50)));renderHistory()} function renderHistory(){const h=getHistory(),body=document.getElementById("historyBody");document.getElementById("historyCount").textContent=`${h.length} record${h.length===1?"":"s"}`;if(!h.length){body.innerHTML='<tr><td colspan="8" class="empty">No flights processed yet.</td></tr>';return}body.innerHTML=h.map(r=>`<tr><td>${escapeHTML(r.flight_number)}</td><td>${escapeHTML(r.aircraft_name)}</td><td>${escapeHTML(r.destination)}</td><td>${tag(r.weather_status==="Dangerous"?"DANGEROUS":"SAFE",r.weather_status==="Dangerous"?"danger":"safe")}</td><td>${tag(r.collision_status==="RISK"?"RISK":"SAFE",r.collision_status==="RISK"?"danger":"safe")}</td><td>${r.emergency_status==="None"?tag("NONE","safe"):tag(r.emergency_status,"warn")}</td><td>Runway ${r.runway_number}</td><td>${new Date(r.created_at).toLocaleString()}</td></tr>`).join("")}
+function addAlert(level,label,message){const row=document.createElement("div");row.className=`alert ${level}`;row.innerHTML=`<span class="alert-time">${nowTime()}</span><span class="alert-level">${escapeHTML(label)}</span><span>${escapeHTML(message)}</span>`;document.getElementById("alerts").prepend(row)}
+function readForm(){const f=new FormData(form);return{aircraft:String(f.get("aircraft_name")).trim(),flight:String(f.get("flight_number")).trim(),destination:String(f.get("destination")).trim(),fuel:Number(f.get("fuel_level")),engineTemp:Number(f.get("engine_temp")),wind:Number(f.get("wind_speed")),visibility:Number(f.get("visibility"))}}
+function validateData(d){if(!d.aircraft||!d.flight||!d.destination)return"Please fill in the aircraft, flight number and destination.";if([d.fuel,d.engineTemp,d.wind,d.visibility].some(v=>!Number.isFinite(v)))return"Fuel, engine temperature, wind speed and visibility must be numbers.";if(d.fuel<0||d.fuel>100)return"Fuel level must be between 0 and 100.";if(d.wind<0||d.visibility<0)return"Wind speed and visibility cannot be negative.";return""}
+async function processAircraft(){formMessage.textContent="";const d=readForm(),error=validateData(d);if(error){formMessage.textContent=error;addAlert("warn","INPUT",error);return}analyseBtn.disabled=true;analyseBtn.textContent="Analysing...";try{const r=createReport(d);latestReport=r;subjectAircraft={x:r.pos_x,y:r.pos_y,label:r.flight_number};renderReport(r);saveHistory(r);addAlert("ok","ANALYSIS",`${r.flight_number} processed successfully.`);if(r.collision_status==="RISK")addAlert("danger","COLLISION",`Traffic conflict detected near ${r.nearest_aircraft}.`);if(r.weather_status==="Dangerous")addAlert("warn","WEATHER","Wind or visibility is outside the normal threshold.");if(r.volcanic_ash)addAlert("danger","ASH","Aircraft is inside a simulated volcanic ash zone.");if(r.emergencies.length)addAlert("danger","EMERGENCY",r.emergency_status);addAlert("info","RUNWAY",`Runway ${r.runway_number} assigned.`);document.getElementById("aiOutput").textContent=buildLocalAssessment(r)}finally{analyseBtn.disabled=false;analyseBtn.textContent="Run ATC Analysis"}}
+function fillRandomAircraft(){const a=["Boeing 737","Airbus A320","Boeing 787","Airbus A350","ATR 72"],d=["Mumbai","Chennai","Delhi","Bengaluru","Hyderabad","Kolkata"];form.elements.aircraft_name.value=a[Math.floor(Math.random()*a.length)];form.elements.flight_number.value="AI"+Math.floor(100+Math.random()*899);form.elements.destination.value=d[Math.floor(Math.random()*d.length)];form.elements.fuel_level.value=Math.floor(15+Math.random()*80);form.elements.engine_temp.value=Math.floor(65+Math.random()*40);form.elements.wind_speed.value=Math.floor(10+Math.random()*65);form.elements.visibility.value=Math.floor(300+Math.random()*5000);formMessage.textContent="Random aircraft data loaded.";addAlert("info","INPUT","Random aircraft data generated.")}
+function runTextCommand(){const input=document.getElementById("commandInput"),command=input.value.trim().toLowerCase();if(!command){formMessage.textContent="Enter an ATC command first.";return}addAlert("info","COMMAND",command);if(!latestReport){formMessage.textContent="Run an aircraft analysis first.";return}let message;if(command.includes("collision")){const c=checkCollision(latestReport.pos_x,latestReport.pos_y);message=c.risk?`Collision risk detected. Nearest traffic is ${c.nearestAircraft} at ${c.distance} units.`:`No collision risk detected. Nearest traffic is ${c.nearestAircraft} at ${c.distance} units.`;addAlert(c.risk?"danger":"ok","COLLISION",message)}else if(command.includes("runway")){message=`Runway ${latestReport.runway_number}: ${latestReport.runway_reason}.`;addAlert("info","RUNWAY",message)}else if(command.includes("weather")){message=`Weather status: ${latestReport.weather_status}. Wind ${latestReport.wind_speed} km/h, visibility ${latestReport.visibility} m.`;addAlert(latestReport.weather_status==="Dangerous"?"warn":"ok","WEATHER",message)}else if(command.includes("emergency")){message=latestReport.emergency_status==="None"?"No emergency condition detected.":`Emergency conditions: ${latestReport.emergency_status}.`;addAlert(latestReport.emergency_status==="None"?"ok":"danger","EMERGENCY",message)}else if(command.includes("ash")||command.includes("volcanic")){message=latestReport.volcanic_ash?"Volcanic ash detected at the simulated aircraft position.":"No volcanic ash zone detected at the simulated aircraft position.";addAlert(latestReport.volcanic_ash?"danger":"ok","ASH",message)}else if(command.includes("status")){message=`System online. Latest flight: ${latestReport.flight_number}.`;addAlert("ok","SYSTEM",message)}else{formMessage.textContent="Command not recognised. Try collision detection, runway allocation, weather analysis, emergency check, volcanic ash, or system status.";return}formMessage.textContent=message}
 
-  <section class="panel radar-panel">
-    <div class="panel-title">
-      <div>
-        <h2>Radar Scope</h2>
-        <p>Simulated traffic and hazard zones</p>
-      </div>
-      <span class="small-status" id="radarStatus">4 contacts</span>
-    </div>
-
-    <div class="radar-holder">
-      <canvas id="radarCanvas" width="520" height="520"></canvas>
-    </div>
-
-    <div class="legend">
-      <span><i class="legend-dot traffic"></i>Traffic</span>
-      <span><i class="legend-dot subject"></i>Subject</span>
-      <span><i class="legend-dot ash"></i>Ash zone</span>
-    </div>
-  </section>
-
-  <section class="panel intake-panel">
-    <div class="panel-title">
-      <div>
-        <h2>Aircraft Intake</h2>
-        <p>Enter data manually or use voice input</p>
-      </div>
-      <span class="small-status" id="voiceStatus">Voice ready</span>
-    </div>
-
-    <form id="intakeForm">
-      <label class="field">
-        <span>Aircraft type</span>
-        <input type="text" name="aircraft_name" placeholder="Boeing 737" required>
-      </label>
-
-      <label class="field">
-        <span>Flight number</span>
-        <input type="text" name="flight_number" placeholder="AI203" required>
-      </label>
-
-      <label class="field">
-        <span>Destination</span>
-        <input type="text" name="destination" placeholder="Mumbai" required>
-      </label>
-
-      <div class="field-row">
-        <label class="field">
-          <span>Fuel level <em>%</em></span>
-          <input type="number" name="fuel_level" min="0" max="100" step="0.1" placeholder="65" required>
-        </label>
-
-        <label class="field">
-          <span>Engine temperature <em>°C</em></span>
-          <input type="number" name="engine_temp" step="0.1" placeholder="78" required>
-        </label>
-      </div>
-
-      <div class="field-row">
-        <label class="field">
-          <span>Wind speed <em>km/h</em></span>
-          <input type="number" name="wind_speed" min="0" step="0.1" placeholder="25" required>
-        </label>
-
-        <label class="field">
-          <span>Visibility <em>m</em></span>
-          <input type="number" name="visibility" min="0" step="1" placeholder="3000" required>
-        </label>
-      </div>
-
-      <div class="button-row">
-        <button class="btn primary" type="submit" id="analyseBtn">Run ATC Analysis</button>
-        <button class="btn secondary" type="button" id="randomBtn">Random Aircraft</button>
-      </div>
-
-      <div class="voice-controls">
-        <button class="btn voice" type="button" id="voiceBtn">Start Voice Input</button>
-        <span>Shortcut: Alt + V</span>
-      </div>
-
-      <p class="message" id="formMessage"></p>
-    </form>
-
-    <div class="command-box">
-      <label for="commandInput">Text command</label>
-      <div class="command-row">
-        <input id="commandInput" type="text"
-               placeholder="Example: collision detection">
-        <button class="btn secondary" id="commandBtn" type="button">Run Command</button>
-      </div>
-      <p class="command-help">
-        Try: collision detection, runway allocation, weather analysis,
-        emergency check, volcanic ash, or system status.
-      </p>
-    </div>
-  </section>
-
-  <section class="panel report-panel" id="reportPanel" hidden>
-    <div class="panel-title">
-      <div>
-        <h2>ATC Analysis Report</h2>
-        <p id="reportTime"></p>
-      </div>
-      <span class="small-status">Latest result</span>
-    </div>
-
-    <div class="report-grid" id="reportGrid"></div>
-
-    <div class="ai-section">
-      <div class="ai-heading">
-        <h3>AI ATC Assessment</h3>
-        <span id="aiStatus">Local rule-based assessment</span>
-      </div>
-      <div class="ai-output" id="aiOutput">
-        Run an analysis to generate the assessment.
-      </div>
-      <div class="ai-actions">
-        <button class="btn secondary" id="ollamaBtn" type="button">Check Ollama</button>
-        <button class="btn secondary" id="speakBtn" type="button">Read Result Aloud</button>
-      </div>
-    </div>
-  </section>
-
-  <section class="panel log-panel">
-    <div class="panel-title">
-      <div>
-        <h2>Flight History</h2>
-        <p>Stored in the browser using localStorage</p>
-      </div>
-      <div class="log-actions">
-        <span class="small-status" id="historyCount">0 records</span>
-        <button class="btn secondary small" id="clearHistoryBtn" type="button">Clear History</button>
-      </div>
-    </div>
-
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Flight</th>
-            <th>Aircraft</th>
-            <th>Destination</th>
-            <th>Weather</th>
-            <th>Collision</th>
-            <th>Emergency</th>
-            <th>Runway</th>
-            <th>Time</th>
-          </tr>
-        </thead>
-        <tbody id="historyBody">
-          <tr>
-            <td colspan="8" class="empty">No flights processed yet.</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </section>
-
-  <section class="panel alerts-panel">
-    <div class="panel-title">
-      <div>
-        <h2>Live Alert Log</h2>
-        <p>Recent system messages</p>
-      </div>
-      <button class="btn secondary small" id="clearAlertsBtn" type="button">Clear Alerts</button>
-    </div>
-
-    <div class="alerts" id="alerts">
-      <div class="alert info">
-        <span class="alert-time">--:--:--</span>
-        <span>System started. Waiting for aircraft data.</span>
-      </div>
-    </div>
-  </section>
-
-</main>
-
-<footer>
-  Educational simulation only. This project is not a certified aviation control system.
-</footer>
-
-<script src="js/script.js"></script>
+document.getElementById("randomBtn").addEventListener("click",fillRandomAircraft);document.getElementById("commandBtn").addEventListener("click",runTextCommand);document.getElementById("commandInput").addEventListener("keydown",e=>{if(e.key==="Enter")runTextCommand()});document.getElementById("clearHistoryBtn").addEventListener("click",()=>{localStorage.removeItem(HISTORY_KEY);renderHistory();addAlert("info","HISTORY","Flight history cleared.")});document.getElementById("clearAlertsBtn").addEventListener("click",()=>document.getElementById("alerts").replaceChildren());form.addEventListener("submit",e=>{e.preventDefault();processAircraft()});updateRadarContacts();renderHistory();animateRadar();setInterval(updateRadarContacts,5000);
+</script>
 </body>
 </html>
